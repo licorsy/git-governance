@@ -17,7 +17,7 @@ that split exists.
 
 ```bash
 claude plugin marketplace add licorsy/git-governance
-claude plugin install git-governance@licorsy
+claude plugin install git-governance@git-governance
 ```
 
 This makes the `git-governance-advisor` subagent and the 5 commands below
@@ -111,6 +111,19 @@ covered by the same `pre-commit` checks locally; running Actions there too
 would spend quota re-checking what already passed. `hom` and `main` are
 infrequent, deliberate promotion points, so that's where a remote
 confirmation is worth the minutes.
+
+## Companion plugins
+
+`git-governance` is the single owner of branch/commit/merge policy **and** of
+when GitHub Actions runs in a repo. Other governance plugins — e.g.
+[docs-governance](https://github.com/licorsy/docs-governance) for Markdown
+consistency — plug into `pr-checks.yml` as a step (already wired in,
+auto-skipped unless the repo has a `.docgov.config.js`), rather than bringing
+their own workflow file and trigger policy. See "Companion plugins" in
+`CLAUDE.md` for the full rationale, including why each self-hosted plugin
+marketplace must use its own plugin name as its marketplace name
+(`git-governance@git-governance`, never a name shared with another plugin's
+marketplace).
 
 ## Replicate into another repository
 

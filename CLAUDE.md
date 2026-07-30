@@ -72,10 +72,30 @@ too would burn quota on checks that already passed locally. `hom` and `main`
 are the deliberate, infrequent promotion points, so that's where spending
 Actions minutes on one more remote confirmation is worth it.
 
+## Companion plugins
+
+`git-governance` owns all Git and CI-orchestration policy for a repo: branch
+taxonomy, commit format, merge permissions, and **when GitHub Actions runs at
+all**. Other governance plugins (e.g.
+[docs-governance](https://github.com/licorsy/docs-governance), which checks
+Markdown consistency) are invoked *inside* this plugin's workflow as a step,
+never with a trigger of their own — `.github/workflows/pr-checks.yml` already
+has an optional, auto-skipped `docs-governance` step that only runs if the
+repo has a `.docgov.config.js`. Don't let a companion plugin add its own
+`.github/workflows/*.yml` to a repo governed by this one; fold it in as a step
+instead, so branch/trigger policy stays in one place.
+
+Each self-hosted plugin marketplace must use **its own plugin name** as its
+marketplace name (`git-governance@git-governance`, `docs-governance@docs-governance`,
+etc.) — never share a marketplace name across separate source repos. Claude
+Code registers at most one marketplace per name, so two different plugins
+claiming the same name means the second `marketplace add` silently replaces
+the first.
+
 ## Replicating this setup into another repository
 
 1. `claude plugin marketplace add licorsy/git-governance` then
-   `claude plugin install git-governance@licorsy` in the target repo.
+   `claude plugin install git-governance@git-governance` in the target repo.
 2. Run `/git-check` — it reports what's missing and, with confirmation,
    scaffolds this file plus `.pre-commit-config.yaml` and
    `.github/workflows/pr-checks.yml` via `scripts/init-governance.sh`. It
