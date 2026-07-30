@@ -1,0 +1,14 @@
+{
+  "name": "git-governance",
+  "owner": {
+    "name": "Licorsy",
+    "url": "https://github.com/licorsy"
+  },
+  "plugins": [
+    {
+      "name": "git-governance",
+      "source": "./",
+      "description": "Portable branch/merge governance persona plus a one-shot script to configure real GitHub branch protection, installable in any repository."
+    }
+  ]
+}

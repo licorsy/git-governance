@@ -1,0 +1,11 @@
+{
+  "name": "git-governance",
+  "version": "1.0.0",
+  "description": "Branch-naming taxonomy and merge-permission matrix (autonomous up to develop, human-gated for hom/main), plus a script to configure real GitHub branch protection. No local linting engine — enforcement is native GitHub config, not prose.",
+  "author": {
+    "name": "Licorsy",
+    "url": "https://github.com/licorsy"
+  },
+  "repository": "https://github.com/licorsy/git-governance",
+  "license": "MIT"
+}
