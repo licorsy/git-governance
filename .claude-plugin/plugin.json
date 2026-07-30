@@ -1,7 +1,7 @@
 {
   "name": "git-governance",
-  "version": "1.0.0",
-  "description": "Branch-naming taxonomy and merge-permission matrix (autonomous up to develop, human-gated for hom/main), plus a script to configure real GitHub branch protection. No local linting engine — enforcement is native GitHub config, not prose.",
+  "version": "1.1.0",
+  "description": "Branch-naming taxonomy, commit-message and merge-permission matrix (autonomous up to develop, human-gated for hom/main), 5 slash commands for the daily solo workflow, a pre-commit config as the primary local validation layer, a quota-conscious GitHub Actions workflow, and a script to configure real GitHub branch protection.",
   "author": {
     "name": "Licorsy",
     "url": "https://github.com/licorsy"

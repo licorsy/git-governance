@@ -31,15 +31,23 @@ if [ "${#BRANCHES[@]}" -eq 0 ]; then
 fi
 
 command -v gh >/dev/null 2>&1 || { echo "gh CLI is required." >&2; exit 1; }
+gh auth status >/dev/null 2>&1 || {
+  echo "gh CLI is not authenticated. Run 'gh auth login' first." >&2
+  exit 1
+}
 
 echo "Enabling delete_branch_on_merge on ${REPO}..."
 gh api --method PATCH "repos/${REPO}" -f delete_branch_on_merge=true >/dev/null
 
 EXISTING_BRANCHES="$(gh api "repos/${REPO}/branches" --jq '.[].name')"
 
+CONFIGURED=()
+SKIPPED=()
+
 for BRANCH in "${BRANCHES[@]}"; do
   if ! grep -qx "$BRANCH" <<<"$EXISTING_BRANCHES"; then
     echo "Skipping '${BRANCH}' — does not exist in ${REPO} yet."
+    SKIPPED+=("$BRANCH")
     continue
   fi
 
@@ -80,6 +88,8 @@ JSON
     echo "Creating ruleset '${RULESET_NAME}' on ${REPO}..."
     gh api --method POST "repos/${REPO}/rulesets" --input - <<<"$PAYLOAD" >/dev/null
   fi
+  CONFIGURED+=("$BRANCH")
 done
 
-echo "Done."
+echo ""
+echo "Configured: ${CONFIGURED[*]:-none}. Skipped (branch not found): ${SKIPPED[*]:-none}."
