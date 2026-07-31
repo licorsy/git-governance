@@ -114,12 +114,18 @@ confirmation is worth the minutes.
 
 ## Companion plugins
 
-`git-governance` is the single owner of branch/commit/merge policy **and** of
-when GitHub Actions runs in a repo. Other governance plugins — e.g.
+`git-governance` owns branch taxonomy, commit format, and merge permissions
+for a repo — not every workflow trigger. A companion plugin — e.g.
 [docs-governance](https://github.com/licorsy/docs-governance) for Markdown
-consistency — plug into `pr-checks.yml` as a step (already wired in,
-auto-skipped unless the repo has a `.docgov.config.js`), rather than bringing
-their own workflow file and trigger policy. See "Companion plugins" in
+consistency — can plug into `pr-checks.yml` as a step (already wired in,
+auto-skipped unless the repo has a `.docgov.config.js`), which is the
+simplest option when no per-repo customization is needed. It may instead
+bring its own `.github/workflows/*.yml` when it needs something the shared
+step can't give it (for example, extra path filters), as long as that file is
+narrowly path-filtered to what it actually checks **and** matches this repo's
+branch scope — `pull_request: branches: [hom, main]` plus
+`workflow_dispatch: {}`, no `push:` — the same convention `pr-checks.yml`
+follows. Never enable both for the same check. See "Companion plugins" in
 `CLAUDE.md` for the full rationale, including why each self-hosted plugin
 marketplace must use its own plugin name as its marketplace name
 (`git-governance@git-governance`, never a name shared with another plugin's
