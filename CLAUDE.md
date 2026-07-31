@@ -87,6 +87,15 @@ optional `docs-governance` step in `pr-checks.yml` (guarded by
 any PR into `hom`/`main` that touches docs. Enable that step only in repos
 where docs-governance has no separate workflow of its own.
 
+A companion's own workflow file should also match this repo's *branch*
+scope, not just its path scope: `pull_request: branches: [hom, main]` plus
+`workflow_dispatch: {}`, no `push:` trigger — the same reason `pr-checks.yml`
+itself stays off `develop`/`push` (see "Remote validation layer" above).
+This is not enforced by any code link between the two plugins —
+docs-governance ships no template and has no notion of `hom`/`main`; it's a
+convention this repo's owner (or `/git-check`) applies by hand to whatever
+workflow file a companion brings, exactly the way path-narrowness already is.
+
 **Local pre-commit hooks compose the same way, with one added catch:**
 `${CLAUDE_PLUGIN_ROOT}` does not exist outside a Claude Code session, so a
 companion plugin's own local hook (e.g. `docgov init --hook` installs
