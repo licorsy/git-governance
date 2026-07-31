@@ -74,16 +74,30 @@ Actions minutes on one more remote confirmation is worth it.
 
 ## Companion plugins
 
-`git-governance` owns all Git and CI-orchestration policy for a repo: branch
-taxonomy, commit format, merge permissions, and **when GitHub Actions runs at
-all**. Other governance plugins (e.g.
-[docs-governance](https://github.com/licorsy/docs-governance), which checks
-Markdown consistency) are invoked *inside* this plugin's workflow as a step,
-never with a trigger of their own — `.github/workflows/pr-checks.yml` already
-has an optional, auto-skipped `docs-governance` step that only runs if the
-repo has a `.docgov.config.js`. Don't let a companion plugin add its own
-`.github/workflows/*.yml` to a repo governed by this one; fold it in as a step
-instead, so branch/trigger policy stays in one place.
+`git-governance` owns branch taxonomy, commit format, and merge permissions
+for a repo. It does **not** need to own every workflow trigger — a companion
+plugin (e.g. [docs-governance](https://github.com/licorsy/docs-governance),
+which checks Markdown consistency) may bring its own `.github/workflows/*.yml`
+if it's narrowly scoped to what it actually checks (for example, path-filtered
+to `**/*.md` and its own config file). What to avoid is a companion plugin
+duplicating a check `pr-checks.yml` already runs broadly: if a repo already
+has its own path-filtered `docs-governance.yml`, don't also enable the
+optional `docs-governance` step in `pr-checks.yml` (guarded by
+`hashFiles('.docgov.config.js')`) — that would run the same check twice on
+any PR into `hom`/`main` that touches docs. Enable that step only in repos
+where docs-governance has no separate workflow of its own.
+
+**Local pre-commit hooks compose the same way, with one added catch:**
+`${CLAUDE_PLUGIN_ROOT}` does not exist outside a Claude Code session, so a
+companion plugin's own local hook (e.g. `docgov init --hook` installs
+`.git/hooks/pre-commit` directly, calling `docgov` via a fixed path — a
+vendored copy under `.github/`, or an absolute path to a sibling checkout)
+cannot reference it. Running `pre-commit install` overwrites that hook file
+wholesale. Before installing this plugin's `.pre-commit-config.yaml` hooks
+into a repo that already has such a hook, add the companion's check as a
+`repo: local` entry first (see the commented example already checked into a
+target repo's `.pre-commit-config.yaml` if one exists), so the framework
+extends the existing coverage instead of silently deleting it.
 
 Each self-hosted plugin marketplace must use **its own plugin name** as its
 marketplace name (`git-governance@git-governance`, `docs-governance@docs-governance`,
