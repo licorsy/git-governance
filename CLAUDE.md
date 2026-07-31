@@ -10,11 +10,11 @@ verbatim in another repo.
 ## Branch flow
 
 ```text
-feature/* (also fix/, docs/, chore/, hotfix/)  ->  develop  ->  hom  ->  main
+feature/* (also fix/, docs/, chore/, hotfix/)  ->  develop  ->  staging  ->  main
 ```
 
 - Work branches are created from an up-to-date `develop`.
-- `develop -> hom` and `hom -> main` are promotions, never a starting point
+- `develop -> staging` and `staging -> main` are promotions, never a starting point
   for new work.
 - Naming: `<prefix>/<id>-<short-description>`, prefixes `feat`, `fix`,
   `docs`, `chore`, `hotfix`. Full taxonomy and the permission matrix live in
@@ -31,7 +31,7 @@ feature/* (also fix/, docs/, chore/, hotfix/)  ->  develop  ->  hom  ->  main
 
 ## Merge policy
 
-- **Never push directly to a protected branch.** `hom` and `main` are
+- **Never push directly to a protected branch.** `staging` and `main` are
   protected server-side (see `scripts/setup-branch-protection.sh`); `develop`
   is treated as *logically* protected too — direct push is technically
   possible but should be avoided in favor of a PR even inside the autonomous
@@ -39,7 +39,7 @@ feature/* (also fix/, docs/, chore/, hotfix/)  ->  develop  ->  hom  ->  main
 - Merging into `develop` is autonomous: Claude Code opens the PR and merges
   it once `pre-commit` and commit-message checks pass. No pause is needed —
   `develop` has no required reviewers and errors there are cheap to revert.
-- Merging into `hom` or `main` always requires **explicit human confirmation
+- Merging into `staging` or `main` always requires **explicit human confirmation
   before the PR is even opened**, and the merge itself is a human action, not
   an automated one — even when the request comes from the repo owner using
   their own credentials. See the permission model in
@@ -62,13 +62,13 @@ Conventional Commits check, which runs at a different git hook stage.
 
 GitHub Actions (`.github/workflows/pr-checks.yml`) only runs on:
 
-- `pull_request` targeting `hom` or `main`
+- `pull_request` targeting `staging` or `main`
 - manual `workflow_dispatch`
 
 It deliberately does **not** run on `develop` or on plain `push`. `develop`
 already gets the same checks locally via `pre-commit` on every commit, and
 merges into `develop` happen automatically and often — running Actions there
-too would burn quota on checks that already passed locally. `hom` and `main`
+too would burn quota on checks that already passed locally. `staging` and `main`
 are the deliberate, infrequent promotion points, so that's where spending
 Actions minutes on one more remote confirmation is worth it.
 
@@ -84,15 +84,15 @@ duplicating a check `pr-checks.yml` already runs broadly: if a repo already
 has its own path-filtered `docs-governance.yml`, don't also enable the
 optional `docs-governance` step in `pr-checks.yml` (guarded by
 `hashFiles('.docgov.config.js')`) — that would run the same check twice on
-any PR into `hom`/`main` that touches docs. Enable that step only in repos
+any PR into `staging`/`main` that touches docs. Enable that step only in repos
 where docs-governance has no separate workflow of its own.
 
 A companion's own workflow file should also match this repo's *branch*
-scope, not just its path scope: `pull_request: branches: [hom, main]` plus
+scope, not just its path scope: `pull_request: branches: [staging, main]` plus
 `workflow_dispatch: {}`, no `push:` trigger — the same reason `pr-checks.yml`
 itself stays off `develop`/`push` (see "Remote validation layer" above).
 This is not enforced by any code link between the two plugins —
-docs-governance ships no template and has no notion of `hom`/`main`; it's a
+docs-governance ships no template and has no notion of `staging`/`main`; it's a
 convention this repo's owner (or `/git-check`) applies by hand to whatever
 workflow file a companion brings, exactly the way path-narrowness already is.
 
@@ -123,7 +123,7 @@ the first.
    scaffolds this file plus `.pre-commit-config.yaml` and
    `.github/workflows/pr-checks.yml` via `scripts/init-governance.sh`. It
    never overwrites an existing `CLAUDE.md` in the target repo.
-3. If the target repo doesn't have `develop`/`hom` yet, create them before
+3. If the target repo doesn't have `develop`/`staging` yet, create them before
    running the protection script below.
 4. `pre-commit install && pre-commit install --hook-type commit-msg`.
 5. `./scripts/setup-branch-protection.sh <owner>/<repo>`.
