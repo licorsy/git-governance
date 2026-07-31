@@ -1,5 +1,7 @@
 # git-governance
 
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/licorsy/git-governance/badge)](https://securityscorecards.dev/viewer/?uri=github.com/licorsy/git-governance)
+
 Portable branch/merge/commit governance for a solo maintainer working with
 Claude Code: a subagent that guides and executes Git operations within a
 fixed taxonomy and permission matrix, five slash commands that mechanize the
