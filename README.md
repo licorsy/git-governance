@@ -9,7 +9,7 @@ script that configures the part with real teeth — actual branch protection
 on GitHub.
 
 Naming and permission rules are guidance (the subagent + commands); "can't
-push directly/force-push/delete `develop`/`hom`/`main`" is native GitHub
+push directly/force-push/delete `develop`/`staging`/`main`" is native GitHub
 configuration (the script). See `agents/git-governance-advisor.md` for why
 that split exists.
 
@@ -26,7 +26,7 @@ available in any Claude Code session opened in that repository.
 ## Branch and commit flow
 
 ```text
-feature/* (also fix/, docs/, chore/, hotfix/)  ->  develop  ->  hom  ->  main
+feature/* (also fix/, docs/, chore/, hotfix/)  ->  develop  ->  staging  ->  main
 ```
 
 Branch names: `<prefix>/<id>-<short-description>`, e.g. `feat/142-oauth-login`,
@@ -59,7 +59,7 @@ Once per repository (re-runnable, idempotent):
 ./scripts/setup-branch-protection.sh <owner>/<repo> [branch ...]
 ```
 
-With no branch arguments, it tries `develop hom main` and silently skips any
+With no branch arguments, it tries `develop staging main` and silently skips any
 that don't exist yet. Requires the `gh` CLI, authenticated, with admin
 permission on the target repo.
 
@@ -73,7 +73,7 @@ What the script wires up:
 What the script does **not** and cannot do: distinguish "the owner clicked
 merge" from "an AI agent using the owner's own credentials clicked merge."
 That distinction is the subagent's job (`agents/git-governance-advisor.md`):
-it asks before touching `hom`/`main`; up to `develop`, it acts on its own.
+it asks before touching `staging`/`main`; up to `develop`, it acts on its own.
 
 ## Daily solo workflow
 
@@ -84,10 +84,10 @@ it asks before touching `hom`/`main`; up to `develop`, it acts on its own.
    `develop`, and merges it automatically once checks pass. No pause needed
    here; errors on `develop` are cheap to revert.
 4. Periodically, when you have something worth promoting:
-   `/prepare-merge-hom` — runs the checklist, then **stops and asks** before
-   opening a `develop -> hom` PR. Merging is a manual click from there.
-5. When `hom` is validated: `/prepare-release-main` — same pattern for
-   `hom -> main`.
+   `/prepare-merge-staging` — runs the checklist, then **stops and asks** before
+   opening a `develop -> staging` PR. Merging is a manual click from there.
+5. When `staging` is validated: `/prepare-release-main` — same pattern for
+   `staging -> main`.
 6. `/git-check` anytime — audits branch name, governance files, pre-commit
    installation, and branch protection status; offers to fix gaps, never
    writes without asking first.
@@ -99,16 +99,16 @@ it asks before touching `hom`/`main`; up to `develop`, it acts on its own.
 | `/git-check` | Audits the repo's governance setup and offers to scaffold missing pieces. |
 | `/create-feature <description> [id] [prefix]` | Creates a correctly named branch from `develop`. |
 | `/prepare-merge-develop` | Validates and auto-merges a work branch into `develop`. |
-| `/prepare-merge-hom` | Opens a `develop -> hom` PR after explicit confirmation; never auto-merges. |
-| `/prepare-release-main` | Opens a `hom -> main` PR after explicit confirmation; never auto-merges. |
+| `/prepare-merge-staging` | Opens a `develop -> staging` PR after explicit confirmation; never auto-merges. |
+| `/prepare-release-main` | Opens a `staging -> main` PR after explicit confirmation; never auto-merges. |
 
 ## When to use GitHub Actions
 
-`.github/workflows/pr-checks.yml` runs on `pull_request` into `hom` or
+`.github/workflows/pr-checks.yml` runs on `pull_request` into `staging` or
 `main`, plus manual `workflow_dispatch` — and deliberately **not** on
 `develop` or on plain `push`. `develop` merges happen often and are already
 covered by the same `pre-commit` checks locally; running Actions there too
-would spend quota re-checking what already passed. `hom` and `main` are
+would spend quota re-checking what already passed. `staging` and `main` are
 infrequent, deliberate promotion points, so that's where a remote
 confirmation is worth the minutes.
 
@@ -123,7 +123,7 @@ simplest option when no per-repo customization is needed. It may instead
 bring its own `.github/workflows/*.yml` when it needs something the shared
 step can't give it (for example, extra path filters), as long as that file is
 narrowly path-filtered to what it actually checks **and** matches this repo's
-branch scope — `pull_request: branches: [hom, main]` plus
+branch scope — `pull_request: branches: [staging, main]` plus
 `workflow_dispatch: {}`, no `push:` — the same convention `pr-checks.yml`
 follows. Never enable both for the same check. See "Companion plugins" in
 `CLAUDE.md` for the full rationale, including why each self-hosted plugin
@@ -138,8 +138,8 @@ marketplace).
    scaffolds `CLAUDE.md`, `.pre-commit-config.yaml`, and
    `.github/workflows/pr-checks.yml` via `scripts/init-governance.sh`. An
    existing `CLAUDE.md` is never overwritten.
-3. If the target repo doesn't have `develop`/`hom` yet, create them first
-   (`git checkout -b develop && git push -u origin develop`, same for `hom`)
+3. If the target repo doesn't have `develop`/`staging` yet, create them first
+   (`git checkout -b develop && git push -u origin develop`, same for `staging`)
    — `setup-branch-protection.sh` silently skips branches that don't exist.
 4. `pre-commit install && pre-commit install --hook-type commit-msg`.
 5. `./scripts/setup-branch-protection.sh <owner>/<repo>`.

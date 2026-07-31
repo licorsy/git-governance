@@ -7,19 +7,19 @@
 # using the owner's own credentials): protected branches require a pull
 # request to update, reject force-pushes, and cannot be deleted.
 #
-# What this does NOT enforce: "only the human owner may merge into hom/main,
+# What this does NOT enforce: "only the human owner may merge into staging/main,
 # not an AI agent acting as the owner." GitHub's ACLs cannot tell those two
 # apart when they share one account/token — that gate is a *behavioral* rule
-# in the agent persona (ask before touching hom/main), not a server-side one.
+# in the agent persona (ask before touching staging/main), not a server-side one.
 #
 # Usage: setup-branch-protection.sh <owner>/<repo> [branch ...]
-#   Default branches if none given: develop hom main
+#   Default branches if none given: develop staging main
 #   Branches that don't exist in the repo are skipped, not created.
 set -euo pipefail
 
 if [ "$#" -lt 1 ]; then
   echo "Usage: $0 <owner>/<repo> [branch ...]" >&2
-  echo "  Default branches if none given: develop hom main" >&2
+  echo "  Default branches if none given: develop staging main" >&2
   exit 1
 fi
 
@@ -27,7 +27,7 @@ REPO="$1"
 shift
 BRANCHES=("$@")
 if [ "${#BRANCHES[@]}" -eq 0 ]; then
-  BRANCHES=(develop hom main)
+  BRANCHES=(develop staging main)
 fi
 
 command -v gh >/dev/null 2>&1 || { echo "gh CLI is required." >&2; exit 1; }
