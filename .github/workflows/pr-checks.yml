@@ -1,13 +1,13 @@
 # Minimal remote validation, kept deliberately off `develop` to save Actions
 # quota. See CLAUDE.md ("Remote validation layer") for the rationale: local
 # pre-commit is the primary gate everywhere, including develop; this workflow
-# only runs at the two deliberate, infrequent promotion points (hom, main) or
+# only runs at the two deliberate, infrequent promotion points (staging, main) or
 # on demand.
 name: PR checks
 
 on:
   pull_request:
-    branches: [hom, main]
+    branches: [staging, main]
   workflow_dispatch: {}
 
 jobs:
