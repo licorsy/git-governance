@@ -43,7 +43,8 @@ The real enforcement layer for this is the `conventional-pre-commit` hook wired 
 
 - Once a work branch is merged, it's deleted — locally and remotely — in the same execution, not in a future session.
 - `develop`, `staging`, and `main` are never deleted, under any circumstances.
-- Prefer remote cleanup to happen automatically via repo configuration (`delete_branch_on_merge` on GitHub — see `scripts/setup-branch-protection.sh` in this plugin) rather than a manual step repeated on every merge.
+- Prefer remote cleanup to happen automatically via repo configuration (`delete_branch_on_merge` on GitHub — see `scripts/setup-branch-protection.sh` in this plugin) rather than a manual step repeated on every merge. That setting cannot reach `develop`/`staging`/`main`: GitHub exempts protected branches from it, and each ruleset's `deletion` rule blocks it independently — which is what keeps `develop` alive when it is the head branch of a `develop -> staging` promotion.
+- Merge method is not a free choice. `staging` and `main` accept merge commits only; `develop` also accepts squash. Squashing a promotion rewrites the promoted commits, so the target stops sharing history with its source and the next promotion re-conflicts on work already merged. The ruleset enforces this per branch — `scripts/setup-branch-protection.sh`'s header owns the contract.
 
 ## Low-risk exception
 

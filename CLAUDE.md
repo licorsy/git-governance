@@ -56,20 +56,48 @@ feat/* (also fix/, refactor/, docs/, chore/, hotfix/)  ->  develop  ->  staging 
 ## Merge policy
 
 - **Never push directly to a protected branch.** `staging`, `main`, and
-  `develop` are all protected server-side by the same ruleset (see
+  `develop` are each protected server-side by their own ruleset (see
   `scripts/setup-branch-protection.sh`) — direct push is blocked on all
   three, not just `staging`/`main`. What distinguishes `develop` isn't a
   lighter server-side gate, it's the permission model below.
+- **Every merge goes through a pull request, including into `develop`.** The
+  ruleset requires one, at 0 required approvals — a solo maintainer cannot
+  approve their own PR, so any non-zero count would deadlock the branch. Zero
+  is a deliberate choice, not a missing setting.
 - Merging into `develop` is autonomous: Claude Code opens the PR and merges
   it once `pre-commit` and commit-message checks pass. No pause is needed —
-  every branch requires 0 approvals by design (solo maintainer), so what
-  makes `develop` safe to automate is that errors there are cheap to revert,
-  not a lighter review requirement.
+  what makes `develop` safe to automate is that errors there are cheap to
+  revert, not a lighter review requirement.
 - Merging into `staging` or `main` always requires **explicit human confirmation
   before the PR is even opened**, and the merge itself is a human action, not
   an automated one — even when the request comes from the repo owner using
   their own credentials. See the permission model in
   `agents/git-governance-advisor.md`.
+
+### Merge methods
+
+Merge commits are the default; squash is a narrow exception and rebase-merge is
+off entirely. Enforced by ruleset, per branch:
+
+| Target | Allowed merge methods |
+| --- | --- |
+| `develop` | merge commit, squash |
+| `staging`, `main` | merge commit only |
+
+Promotions must never be squashed. Squashing `develop -> staging` rewrites the
+promoted commits into a new one, so `staging` stops sharing history with
+`develop` and the *next* promotion re-conflicts on work already merged. Squash
+stays available into `develop` for work branches whose intermediate commits
+carry no value. Rebase-merge is disabled at the repository level: it offers
+nothing this model needs and rewrites committer metadata on the way in.
+
+### Branch lifecycle
+
+`delete_branch_on_merge` is on, so work branches are removed from the remote
+automatically when their PR merges. The protected branches survive it: GitHub
+exempts protected branches from auto-delete, and each ruleset's `deletion` rule
+blocks it independently. That is what keeps `develop` — the head branch of every
+`develop -> staging` promotion — from being deleted when a promotion merges.
 
 ## Local validation layer (primary)
 
@@ -185,9 +213,12 @@ re-breaking it.
 1. `claude plugin marketplace add licorsy/git-governance` then
    `claude plugin install git-governance@git-governance` in the target repo.
 2. Run `/git-check` — it reports what's missing and, with confirmation,
-   scaffolds this file plus `.pre-commit-config.yaml` and
-   `.github/workflows/pr-checks.yml` via `scripts/init-governance.sh`. It
-   never overwrites an existing `CLAUDE.md` in the target repo.
+   scaffolds this file plus `.pre-commit-config.yaml`,
+   `.github/workflows/pr-checks.yml`, and `.claude/settings.json` via
+   `scripts/init-governance.sh`. It never overwrites a file that already
+   exists in the target repo — which matters most for `.claude/settings.json`,
+   since a repository that already declares its own `enabledPlugins` keeps
+   them.
 3. If the target repo doesn't have `develop`/`staging` yet, create them before
    running the protection script below.
 4. `pre-commit install && pre-commit install --hook-type commit-msg`.
@@ -196,7 +227,8 @@ re-breaking it.
    for you (`/git-check` already offers to, once confirmed) — don't paste
    that path into a bare terminal yourself: `scripts/` is never copied into
    the target repo (see step 2's file list), and `${CLAUDE_PLUGIN_ROOT}` only
-   resolves inside a Claude Code session in the first place.
+   resolves inside a Claude Code session in the first place. This is also what
+   applies the merge-method and branch-lifecycle settings above.
 6. Review the scaffolded pre-commit hooks — they're stack-agnostic by design;
    add language-specific linters by hand per repo.
 

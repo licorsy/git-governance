@@ -67,12 +67,18 @@ module.exports = {
       enabled: true,
     },
 
-    // ---- Phase 2: content rules, shadow mode until precision is proven ----
-    // These two facts pin the exact defects that already drifted more than
+    // ---- Phase 2: content rules ----
+    // These three facts pin the exact defects that already drifted more than
     // once in this repo's own history (see "Documentation ownership" in
-    // CLAUDE.md) — the 6-prefix branch taxonomy, and the docs-governance CI
-    // step's 3-clause guard condition.
+    // CLAUDE.md) — the 6-prefix branch taxonomy, the docs-governance CI
+    // step's 3-clause guard condition, and the per-branch merge methods.
     facts: {
+      // Out of shadow mode: precision is proven. These entries have caught the
+      // same class of drift repeatedly with no false positive, and a pin that
+      // only reports is decoration — the drift it was added for happens anyway.
+      // This also makes the rule run under `--changed`, so pre-commit catches
+      // it rather than CI at promotion time.
+      shadow: false,
       scope_dirs: ['agents', 'commands'],
       entries: [
         {
@@ -112,6 +118,36 @@ module.exports = {
             {
               file: '.github/workflows/pr-checks.yml',
               pattern: /github\.event_name == 'pull_request' &&[\s\S]*?hashFiles\('\.docgov\.config\.js'\) != '' &&[\s\S]*?hashFiles\('\.github\/workflows\/docs-governance\.yml'\) == ''/,
+            },
+          ],
+        },
+        {
+          id: 'merge-method-policy',
+          value: 'develop: merge, squash | staging, main: merge only',
+          why: 'the policy an operator reads and the allowed_merge_methods the '
+            + 'script actually PUTs are four files apart; the whole point of '
+            + 'restricting promotions to merge commits is lost the moment one '
+            + 'of them quietly says otherwise',
+          required_in: [
+            // Cells anchored on their closing `|` on purpose: unanchored, the
+            // pattern matches "merge commit, squash, rebase" as a prefix and
+            // passes. Found by deliberately breaking the equivalent pin in
+            // licorsy/.github rather than by trusting it.
+            {
+              file: 'CLAUDE.md',
+              pattern: /`develop`\s*\|\s*merge commit, squash\s*\|[\s\S]*?`staging`, `main`\s*\|\s*merge commit only\s*\|/,
+            },
+            {
+              file: 'README.md',
+              pattern: /`develop` takes merge or squash, `staging` and `main` take merge commits\s+only/,
+            },
+            {
+              file: 'scripts/setup-branch-protection.sh',
+              pattern: /if \[ "\$BRANCH" = "develop" \]; then\s*\n\s*MERGE_METHODS='\["merge", "squash"\]'\s*\n\s*else\s*\n\s*MERGE_METHODS='\["merge"\]'/,
+            },
+            {
+              file: 'agents/git-governance-advisor.md',
+              pattern: /`staging` and `main` accept merge commits only; `develop` also accepts squash/,
             },
           ],
         },

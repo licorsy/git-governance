@@ -1,7 +1,7 @@
 {
   "name": "git-governance",
-  "version": "1.2.0",
-  "description": "Branch-naming taxonomy, commit-message and merge-permission matrix (autonomous up to develop, human-gated for staging/main), 5 slash commands for the daily solo workflow, a pre-commit config as the primary local validation layer, a quota-conscious GitHub Actions workflow, and a script to configure real GitHub branch protection.",
+  "version": "1.3.0",
+  "description": "Branch-naming taxonomy, commit-message and merge-permission matrix (autonomous up to develop, human-gated for staging/main), 5 slash commands for the daily solo workflow, a pre-commit config as the primary local validation layer, a quota-conscious GitHub Actions workflow, and a script that configures real GitHub branch protection including per-branch merge methods and automatic work-branch cleanup.",
   "author": {
     "name": "Licorsy",
     "url": "https://github.com/licorsy"
