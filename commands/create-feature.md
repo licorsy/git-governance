@@ -5,7 +5,7 @@ argument-hint: <short-description> [id] [prefix]
 
 Create a new work branch following the taxonomy in `agents/git-governance-advisor.md`.
 
-Arguments: `$ARGUMENTS` — a short description, optionally followed by an id (issue number or slug) and a prefix (`feat`, `fix`, `docs`, `chore`, `hotfix`; defaults to `feat` if not given).
+Arguments: `$ARGUMENTS` — a short description, optionally followed by an id (issue number or slug) and a prefix (`feat`, `fix`, `refactor`, `docs`, `chore`, `hotfix`; defaults to `feat` if not given).
 
 1. Run `git status --short`. If there are uncommitted changes, stop and ask how to handle them (stash, commit, or abort) — don't create a branch on top of a dirty tree without asking.
 2. Confirm the current branch is `develop`. If not, ask whether to switch to it (`git checkout develop`) before continuing.
