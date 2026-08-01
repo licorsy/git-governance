@@ -22,11 +22,19 @@ module.exports = {
       // commands), not docs-governance's title/doc_type/status/version
       // schema. `description` is the one field both file kinds share and
       // the one Claude Code actually needs to route to them correctly.
-      // README.md/CLAUDE.md are narrative docs with no frontmatter by
-      // convention, so they're excluded from this rule rather than forced
-      // into a schema they were never meant to carry.
+      //
+      // CLAUDE.md now carries the full org schema (title, doc_type,
+      // description, status, version, created, updated, language) under the
+      // org-wide decision that every tracked Markdown file is enumerable.
+      // Only `description` is ENFORCED here, because this rule applies one
+      // `required` list to everything in scope and the manifests above
+      // cannot satisfy the other seven. The remaining fields are carried by
+      // convention, not by check — enforcing both schemas needs two rules.
+      //
+      // README.md stays out: it is the rendered repository landing page, and
+      // GitHub renders frontmatter there as a visible table.
       scope_dirs: ['agents', 'commands'],
-      root_files: [],
+      root_files: ['CLAUDE.md'],
       exclude_prefixes: [],
       // ids from these count toward resolving `related:`, but the files
       // themselves aren't checked

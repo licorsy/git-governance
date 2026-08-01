@@ -1,3 +1,17 @@
+---
+title: "git-governance"
+doc_type: instruction
+description: "Git branch, commit, and merge policy for this repository and for every repository this plugin is scaffolded into: the branch flow and prefix taxonomy, Conventional Commits, the autonomous-to-develop and human-gated-to-staging/main permission model, the local and remote validation layers, and how companion plugins compose with it."
+status: active
+version: "1.0.0"
+created: 2026-07-30
+updated: 2026-08-01
+language: en
+id: claude-instructions
+owner: Alexandre Clemente
+tags: [git, branching, commits, merge-policy, claude-code]
+---
+
 # git-governance
 
 Portable Git branch/merge/commit governance for a solo maintainer working with
@@ -6,6 +20,10 @@ literal file scaffolded into any repository this plugin is installed into
 (`scripts/init-governance.sh` copies it as-is — see "Replicating this setup"
 below). Do not add project-specific detail here that wouldn't make sense
 verbatim in another repo.
+
+The frontmatter block above is the one exception: `created`, `updated`, and
+`owner` describe *this* repository, and a scaffolded copy should reset them to
+the target's own values. The remaining fields carry over unchanged.
 
 ## Branch flow
 
