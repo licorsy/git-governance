@@ -21,9 +21,13 @@ literal file scaffolded into any repository this plugin is installed into
 below). Do not add project-specific detail here that wouldn't make sense
 verbatim in another repo.
 
-The frontmatter block above is the one exception: `created`, `updated`, and
-`owner` describe *this* repository, and a scaffolded copy should reset them to
-the target's own values. The remaining fields carry over unchanged.
+The frontmatter block above is the one exception, because it describes *this*
+repository. A scaffolded copy should reset `created`, `updated`, and `owner` to
+the target's own values, and change `title`/`description` to say the policy was
+scaffolded from this plugin rather than naming the plugin as the subject — the
+copy is the target repository's instructions, not a second copy of
+git-governance's. `doc_type`, `status`, `version`, `language`, `id`, and `tags`
+carry over unchanged.
 
 ## Branch flow
 
