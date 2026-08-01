@@ -9,9 +9,11 @@ verbatim in another repo.
 
 ## Branch flow
 
+<!-- fragment:branch-flow:start -->
 ```text
 feat/* (also fix/, refactor/, docs/, chore/, hotfix/)  ->  develop  ->  staging  ->  main
 ```
+<!-- fragment:branch-flow:end -->
 
 - Work branches are created from an up-to-date `develop`.
 - `develop -> staging` and `staging -> main` are promotions, never a starting point
@@ -132,6 +134,29 @@ etc.) — never share a marketplace name across separate source repos. Claude
 Code registers at most one marketplace per name, so two different plugins
 claiming the same name means the second `marketplace add` silently replaces
 the first.
+
+## Documentation ownership
+
+Each fact this plugin governs — the branch-prefix taxonomy, the permission
+matrix, a command's step-by-step behavior, a script's contract, an
+enforcement claim like the CI guard's clause count — has exactly **one**
+authoritative file. Every other file links to it (`"see X"`) instead of
+restating it in its own prose:
+
+- Taxonomy and the permission matrix → owned by
+  `agents/git-governance-advisor.md` only.
+- A command's behavior → owned by that command's own file only.
+- A script's contract → owned by that script's header comment only.
+
+This repo uses `docs-governance` (see "Companion plugins" above) to catch
+restatement drift mechanically where it can: `.docgov.config.js` declares
+`facts` entries for the taxonomy list and the CI guard's clause count, and a
+`fragment_sync` entry for the branch-flow diagram duplicated verbatim across
+`CLAUDE.md` and `README.md`. If an audit — human, `docgov`, or an LLM
+auditor — finds the same fact stated in 2+ files, the fix is to add or
+extend one of those config entries, not just correct the wording in place:
+correcting the wording alone leaves nothing keeping the next edit from
+re-breaking it.
 
 ## Replicating this setup into another repository
 
