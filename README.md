@@ -27,9 +27,11 @@ available in any Claude Code session opened in that repository.
 
 ## Branch and commit flow
 
+<!-- fragment:branch-flow:start -->
 ```text
 feat/* (also fix/, refactor/, docs/, chore/, hotfix/)  ->  develop  ->  staging  ->  main
 ```
+<!-- fragment:branch-flow:end -->
 
 Branch names: `<prefix>/<id>-<short-description>`, e.g. `feat/142-oauth-login`,
 `fix/checkout-timezone-bug`, `docs/readme-quota-section`.
