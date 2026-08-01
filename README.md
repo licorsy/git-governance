@@ -27,9 +27,11 @@ available in any Claude Code session opened in that repository.
 
 ## Branch and commit flow
 
+<!-- fragment:branch-flow:start -->
 ```text
-feature/* (also fix/, docs/, chore/, hotfix/)  ->  develop  ->  staging  ->  main
+feat/* (also fix/, refactor/, docs/, chore/, hotfix/)  ->  develop  ->  staging  ->  main
 ```
+<!-- fragment:branch-flow:end -->
 
 Branch names: `<prefix>/<id>-<short-description>`, e.g. `feat/142-oauth-login`,
 `fix/checkout-timezone-bug`, `docs/readme-quota-section`.
@@ -55,15 +57,21 @@ language-specific linters yourself per repo.
 
 ## Configure real protection on GitHub
 
-Once per repository (re-runnable, idempotent):
+Once per repository (re-runnable, idempotent). If you're in a repo that
+installed this plugin (not this repo itself), ask Claude Code to run it for
+you — `scripts/` isn't copied into installing repos, so this only works as a
+bare path when you're standing in this repo's own clone:
 
 ```bash
 ./scripts/setup-branch-protection.sh <owner>/<repo> [branch ...]
 ```
 
-With no branch arguments, it tries `develop staging main` and silently skips any
-that don't exist yet. Requires the `gh` CLI, authenticated, with admin
-permission on the target repo.
+Elsewhere, the equivalent is
+`${CLAUDE_PLUGIN_ROOT}/scripts/setup-branch-protection.sh <owner>/<repo>`, run
+by Claude Code inside a session (that variable doesn't resolve in a bare
+terminal). With no branch arguments, it tries `develop staging main` and
+silently skips any that don't exist yet. Requires the `gh` CLI, authenticated,
+with admin permission on the target repo.
 
 What the script wires up:
 
@@ -120,14 +128,17 @@ confirmation is worth the minutes.
 for a repo — not every workflow trigger. A companion plugin — e.g.
 [docs-governance](https://github.com/licorsy/docs-governance) for Markdown
 consistency — can plug into `pr-checks.yml` as a step (already wired in,
-auto-skipped unless the repo has a `.docgov.config.js`), which is the
-simplest option when no per-repo customization is needed. It may instead
-bring its own `.github/workflows/*.yml` when it needs something the shared
-step can't give it (for example, extra path filters), as long as that file is
-narrowly path-filtered to what it actually checks **and** matches this repo's
-branch scope — `pull_request: branches: [staging, main]` plus
-`workflow_dispatch: {}`, no `push:` — the same convention `pr-checks.yml`
-follows. Never enable both for the same check. See "Companion plugins" in
+auto-skipped outside `pull_request` runs, and also skipped unless the repo
+has a `.docgov.config.js` *and* no `.github/workflows/docs-governance.yml` of
+its own — that exact filename is what the guard checks for), which is the
+simplest option when no per-repo
+customization is needed. It may instead bring its own workflow at exactly
+that path when it needs something the shared step can't give it (for example,
+extra path filters), as long as that file is narrowly path-filtered to what
+it actually checks **and** matches this repo's branch scope —
+`pull_request: branches: [staging, main]` plus `workflow_dispatch: {}`, no
+`push:` — the same convention `pr-checks.yml` follows. Never enable both for
+the same check. See "Companion plugins" in
 `CLAUDE.md` for the full rationale, including why each self-hosted plugin
 marketplace must use its own plugin name as its marketplace name
 (`git-governance@git-governance`, never a name shared with another plugin's
@@ -144,7 +155,12 @@ marketplace).
    (`git checkout -b develop && git push -u origin develop`, same for `staging`)
    — `setup-branch-protection.sh` silently skips branches that don't exist.
 4. `pre-commit install && pre-commit install --hook-type commit-msg`.
-5. `./scripts/setup-branch-protection.sh <owner>/<repo>`.
+5. Ask Claude Code to run
+   `${CLAUDE_PLUGIN_ROOT}/scripts/setup-branch-protection.sh <owner>/<repo>`
+   for you (`/git-check` already offers to, once confirmed) — don't paste
+   that path into a bare terminal yourself: `scripts/` isn't one of the files
+   `init-governance.sh` copies (see step 2), and `${CLAUDE_PLUGIN_ROOT}` only
+   resolves inside a Claude Code session in the first place.
 6. Review the scaffolded pre-commit hooks and add stack-specific linters by
    hand for that repo.
 7. Commit the scaffolded files on `chore/init-governance` and open a PR into
@@ -166,3 +182,11 @@ including `ai-assisted-sdd-template`, `personal-os`, and
 - `CLAUDE.md` — the policy doc, dogfooded here and copied into target repos.
 - `.pre-commit-config.yaml` / `.github/workflows/pr-checks.yml` — dogfooded
   here and copied into target repos as the local/remote validation layers.
+- `.docgov.config.js` — this repo's own docs-governance config (not
+  scaffolded into target repos); it's what `pr-checks.yml`'s shared
+  `docs-governance` step guard checks for.
+- `.github/workflows/scorecard.yml` — OpenSSF Scorecard analysis for this
+  repo only (not scaffolded into target repos); runs on `push` to `main`, a
+  weekly schedule, and `branch_protection_rule` changes — the one deliberate
+  exception to this repo's push-off, quota-conscious Actions convention,
+  since Scorecard needs those triggers to produce a fresh score.
