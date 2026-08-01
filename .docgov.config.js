@@ -143,11 +143,30 @@ module.exports = {
             },
             {
               file: 'scripts/setup-branch-protection.sh',
-              pattern: /if \[ "\$BRANCH" = "develop" \]; then\s*\n\s*MERGE_METHODS='\["merge", "squash"\]'\s*\n\s*else\s*\n\s*MERGE_METHODS='\["merge"\]'/,
+              // [ \t] rather than \s around the newlines: \s matches \n too, so
+              // `\s*\n\s*` is ambiguous and backtracks. Same match, linear.
+              pattern: /if \[ "\$BRANCH" = "develop" \]; then[ \t]*\n[ \t]*MERGE_METHODS='\["merge", "squash"\]'[ \t]*\n[ \t]*else[ \t]*\n[ \t]*MERGE_METHODS='\["merge"\]'/,
             },
             {
               file: 'agents/git-governance-advisor.md',
               pattern: /`staging` and `main` accept merge commits only; `develop` also accepts squash/,
+            },
+          ],
+        },
+        {
+          id: 'commit-msg-lint-skips-merges',
+          value: 'git log --no-merges --format=%s',
+          why: 'this repo has had the flag since the defect was first hit here, '
+            + 'but never pinned it — so every pr-checks.yml scaffolded from an '
+            + 'earlier revision carried the broken form, and three sibling repos '
+            + 'reproduced a check that fails by construction on every promotion '
+            + 'PR. The flag being correct here is exactly why nobody noticed. '
+            + 'This is the copy that matters most: it is the one others are made '
+            + 'from',
+          required_in: [
+            {
+              file: '.github/workflows/pr-checks.yml',
+              pattern: /git log --no-merges --format=%s/,
             },
           ],
         },
