@@ -75,15 +75,33 @@ with admin permission on the target repo.
 
 What the script wires up:
 
-- `delete_branch_on_merge` on the repo (automatic remote cleanup).
+- Repository settings: `delete_branch_on_merge` (automatic remote cleanup),
+  merge commits and squash allowed, rebase-merge off.
 - One ruleset per existing protected branch: blocks direct push (requires a
   pull request, with 0 required approvals — built for a solo maintainer),
-  blocks force-push, blocks deletion.
+  blocks force-push, blocks deletion, and restricts merge methods per branch —
+  `develop` takes merge or squash, `staging` and `main` take merge commits only.
+- Removal of a legacy single `branch-protection` ruleset, if the repository
+  carries one, after the per-branch rulesets are in place.
+
+One ruleset per branch rather than one spanning all three is what makes the
+per-branch merge methods expressible at all. Promotions must never be squashed:
+squashing `develop -> staging` rewrites the promoted commits, so `staging`
+stops sharing history with `develop` and the next promotion re-conflicts on
+work already merged.
+
+`delete_branch_on_merge` never reaches the protected branches — GitHub exempts
+them, and the `deletion` rule blocks it independently. That is what keeps
+`develop`, the head branch of every `develop -> staging` promotion, alive when
+a promotion merges.
 
 What the script does **not** and cannot do: distinguish "the owner clicked
 merge" from "an AI agent using the owner's own credentials clicked merge."
 That distinction is the subagent's job (`agents/git-governance-advisor.md`):
 it asks before touching `staging`/`main`; up to `develop`, it acts on its own.
+Requiring an approving review is not a substitute — GitHub forbids approving
+your own pull request, so any non-zero count locks a solo maintainer out of
+their own promotion branches.
 
 ## Daily solo workflow
 
@@ -148,9 +166,11 @@ marketplace).
 
 1. Install the plugin (see above) in the target repo's Claude Code session.
 2. Run `/git-check` — it detects what's missing and, with your confirmation,
-   scaffolds `CLAUDE.md`, `.pre-commit-config.yaml`, and
-   `.github/workflows/pr-checks.yml` via `scripts/init-governance.sh`. An
-   existing `CLAUDE.md` is never overwritten.
+   scaffolds `CLAUDE.md`, `.pre-commit-config.yaml`,
+   `.github/workflows/pr-checks.yml`, and `.claude/settings.json` via
+   `scripts/init-governance.sh`. No existing file is ever overwritten, which
+   matters most for `.claude/settings.json`: a repository that already declares
+   its own `enabledPlugins` keeps them.
 3. If the target repo doesn't have `develop`/`staging` yet, create them first
    (`git checkout -b develop && git push -u origin develop`, same for `staging`)
    — `setup-branch-protection.sh` silently skips branches that don't exist.
@@ -166,9 +186,8 @@ marketplace).
 7. Commit the scaffolded files on `chore/init-governance` and open a PR into
    `develop`.
 
-This plugin is designed to be replicated this way into any repository —
-including `ai-assisted-sdd-template`, `personal-os`, and
-`business-tech-agency`.
+This plugin is designed to be replicated this way into any repository, public
+or private.
 
 ## Structure
 
