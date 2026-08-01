@@ -1,9 +1,9 @@
 ---
 title: "git-governance"
 doc_type: instruction
-description: "Git branch, commit, and merge policy for this repository and for every repository this plugin is scaffolded into: the branch flow and prefix taxonomy, Conventional Commits, the autonomous-to-develop and human-gated-to-staging/main permission model, the local and remote validation layers, and how companion plugins compose with it."
+description: "Git branch, commit, and merge policy for this repository and for every repository this plugin is scaffolded into: the branch flow and prefix taxonomy, Conventional Commits, the autonomous-to-develop and human-gated-to-staging/main permission model, per-branch merge methods and branch lifecycle, the local and remote validation layers, and how companion plugins compose with it."
 status: active
-version: "1.0.0"
+version: "1.1.0"
 created: 2026-07-30
 updated: 2026-08-01
 language: en
