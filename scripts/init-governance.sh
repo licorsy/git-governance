@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 # Scaffolds this plugin's governance files into a target repository:
-#   CLAUDE.md, .pre-commit-config.yaml, .github/workflows/pr-checks.yml,
-#   .claude/settings.json
+#   AGENTS.md, CLAUDE.md, .pre-commit-config.yaml,
+#   .github/workflows/pr-checks.yml, .claude/settings.json
+#
+# AGENTS.md carries the policy; CLAUDE.md is a thin `@AGENTS.md` import. Both
+# are copied, because Claude Code loads CLAUDE.md while every other agent reads
+# AGENTS.md by convention - one file cannot serve both without a second copy of
+# the policy, which is the drift this plugin exists to prevent.
+#
+# A target that already has a full CLAUDE.md keeps it: skip-if-exists applies
+# per file, so such a repo receives AGENTS.md and ends up with the policy stated
+# TWICE. Migrating an existing repository means replacing its CLAUDE.md by hand;
+# the script cannot tell a stale full copy from a deliberate local one.
 #
 # Source of truth is this plugin's own root — the files here are dogfooded
 # by git-governance itself, not a separate templates/ copy, so there's
@@ -29,6 +39,7 @@ if [ ! -d "$TARGET_DIR" ]; then
 fi
 
 FILES=(
+  "AGENTS.md"
   "CLAUDE.md"
   ".pre-commit-config.yaml"
   ".github/workflows/pr-checks.yml"

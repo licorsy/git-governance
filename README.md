@@ -157,7 +157,7 @@ it actually checks **and** matches this repo's branch scope —
 `pull_request: branches: [staging, main]` plus `workflow_dispatch: {}`, no
 `push:` — the same convention `pr-checks.yml` follows. Never enable both for
 the same check. See "Companion plugins" in
-`CLAUDE.md` for the full rationale, including why each self-hosted plugin
+`AGENTS.md` for the full rationale, including why each self-hosted plugin
 marketplace must use its own plugin name as its marketplace name
 (`git-governance@git-governance`, never a name shared with another plugin's
 marketplace).
@@ -166,11 +166,14 @@ marketplace).
 
 1. Install the plugin (see above) in the target repo's Claude Code session.
 2. Run `/git-check` — it detects what's missing and, with your confirmation,
-   scaffolds `CLAUDE.md`, `.pre-commit-config.yaml`,
+   scaffolds `AGENTS.md`, `CLAUDE.md`, `.pre-commit-config.yaml`,
    `.github/workflows/pr-checks.yml`, and `.claude/settings.json` via
    `scripts/init-governance.sh`. No existing file is ever overwritten, which
-   matters most for `.claude/settings.json`: a repository that already declares
-   its own `enabledPlugins` keeps them.
+   matters most in two places: a repository that already declares its own
+   `enabledPlugins` keeps them, and one that already has a **full** `CLAUDE.md`
+   keeps that too — so it receives `AGENTS.md` and ends up stating the policy
+   twice. Migrating an existing repository means replacing its `CLAUDE.md` with
+   the thin `@AGENTS.md` import by hand.
 3. If the target repo doesn't have `develop`/`staging` yet, create them first
    (`git checkout -b develop && git push -u origin develop`, same for `staging`)
    — `setup-branch-protection.sh` silently skips branches that don't exist.
@@ -198,7 +201,10 @@ or private.
   GitHub.
 - `scripts/init-governance.sh` — scaffolds this plugin's governance files
   into a target repo.
-- `CLAUDE.md` — the policy doc, dogfooded here and copied into target repos.
+- `AGENTS.md` — the policy doc and the source of truth, dogfooded here and
+  copied into target repos.
+- `CLAUDE.md` — a thin `@AGENTS.md` import, so Claude Code loads the same
+  policy every other agent reads directly. Copied alongside it.
 - `.pre-commit-config.yaml` / `.github/workflows/pr-checks.yml` — dogfooded
   here and copied into target repos as the local/remote validation layers.
 - `.docgov.config.js` — this repo's own docs-governance config (not
