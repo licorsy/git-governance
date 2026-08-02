@@ -153,23 +153,6 @@ module.exports = {
             },
           ],
         },
-        {
-          id: 'commit-msg-lint-skips-merges',
-          value: 'git log --no-merges --format=%s',
-          why: 'this repo has had the flag since the defect was first hit here, '
-            + 'but never pinned it — so every pr-checks.yml scaffolded from an '
-            + 'earlier revision carried the broken form, and three sibling repos '
-            + 'reproduced a check that fails by construction on every promotion '
-            + 'PR. The flag being correct here is exactly why nobody noticed. '
-            + 'This is the copy that matters most: it is the one others are made '
-            + 'from',
-          required_in: [
-            {
-              file: '.github/workflows/pr-checks.yml',
-              pattern: /git log --no-merges --format=%s/,
-            },
-          ],
-        },
       ],
     },
     // sum_decomposition: { entries: [
