@@ -3,7 +3,7 @@ title: "git-governance"
 doc_type: instruction
 description: "Git branch, commit, and merge policy for this repository and for every repository this plugin is scaffolded into: the branch flow and prefix taxonomy, Conventional Commits, the autonomous-to-develop and human-gated-to-staging/main permission model, per-branch merge methods and branch lifecycle, the local and remote validation layers, and how companion plugins compose with it."
 status: active
-version: "2.0.0"
+version: "2.1.0"
 created: 2026-07-30
 updated: 2026-08-01
 language: en
@@ -135,29 +135,35 @@ Actions minutes on one more remote confirmation is worth it.
 
 `git-governance` owns branch taxonomy, commit format, and merge permissions
 for a repo. It does **not** need to own every workflow trigger — a companion
-plugin may bring its own workflow instead of using a shared step in
+plugin may bring its own workflow instead of using the shared job in
 `pr-checks.yml`, as long as it's narrowly scoped to what it actually checks
 (for example, path-filtered to `**/*.md` and its own config file). For
 [docs-governance](https://github.com/licorsy/docs-governance) specifically,
 that file must be named exactly `.github/workflows/docs-governance.yml` — not
 just any narrowly-scoped filename — because that literal string is what
 `pr-checks.yml`'s guard checks for below; a differently-named docs-governance
-workflow would go unrecognized and the shared step would keep running
+workflow would go unrecognized and the shared job would keep running
 alongside it. A different companion plugin would need its own guard, since
 this specific filename check only knows about docs-governance. What to avoid
 is a companion plugin
 duplicating a check `pr-checks.yml` already runs broadly: the shared
-`docs-governance` step in `pr-checks.yml` is guarded by all three of
+`docs-governance` job in `pr-checks.yml` is guarded by all three of
 `github.event_name == 'pull_request'`, `hashFiles('.docgov.config.js') != ''`,
 and `hashFiles('.github/workflows/docs-governance.yml') == ''`, so it
 self-disables the moment a repo adds that file — no manual toggling needed.
+It runs as its own **job**, not a step inside `pre-commit`: steps stop at the
+first failure, so as a trailing step this check was hostage to the
+commit-message lint, and one non-conforming subject made the documentation check
+silently not run at all. Reordering only reverses which check is hostage;
+separate jobs make them independent both ways. The guard itself stays at step
+level, because `hashFiles()` is not recognized in a job-level `if:`.
 Keep all three clauses when copying this workflow: dropping the first means a
 manual `workflow_dispatch` run passes an empty `base-sha` — only the
 `version-bump` rule reads that value, and it abstains rather than fails
 without one, so the other rules (frontmatter, internal-links,
 changelog-retention) still run and can still fail; a dispatch run is a
 *partial* check missing version-bump coverage, not a run doing nothing;
-dropping the second runs the step in repos with no docs-governance config at
+dropping the second runs the check in repos with no docs-governance config at
 all; dropping the third is what would let the same check run twice on any PR
 into `staging`/`main` that touches docs.
 
