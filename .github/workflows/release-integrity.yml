@@ -1,0 +1,35 @@
+name: Release integrity
+
+# Consumers install this plugin by tag, and `scripts/init-governance.sh` copies
+# from the installed plugin cache — which resolves tags, not branches. So work
+# merged to `main` without a release keeps scaffolding the previous version's
+# files, silently and for as long as nobody looks.
+#
+# This repository is where that failure was first observed: seven commits past
+# v1.1.0 with no version bump, and two repositories were scaffolded with a
+# CLAUDE.md asserting `develop` was not protected server-side. It recurred at
+# v1.4.1 — the release merged to `main` and simply was not tagged, so the CI
+# fix it carried reached nobody until someone noticed by hand.
+#
+# The check itself already existed when that happened. Nothing was running it
+# here. Shipping a check is not running one, which is the whole reason this
+# file exists rather than another entry in a register.
+#
+# Scheduled, never on push to `main`: tagging happens *after* the merge, so a
+# push-triggered run would fail on every release by construction and train
+# everyone to ignore it.
+
+on:
+  schedule:
+    # Daily, offset from the other repositories' runs. Drift is silent and
+    # open-ended, so latency in hours is fine — what matters is that it is
+    # bounded at all.
+    - cron: '31 6 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  release-integrity:
+    uses: licorsy/platform-workflows/.github/workflows/release-integrity.yml@v1
+    # Defaults apply: major tag `v1`, and `.claude-plugin/plugin.json` as the
+    # version file — this is a Claude Code plugin, so the version-tag check is
+    # meaningful here and both comparisons run.
