@@ -10,7 +10,7 @@ Use `/prepare-merge-staging` and `/prepare-release-main` instead when you want t
 
 1. Fetch. Determine both ranges: `git log staging..develop --oneline` and `git log main..staging --oneline`. If both are empty, say so and stop.
 2. Check for open PRs already targeting `staging` or `main` (`gh pr list --base staging`, `gh pr list --base main`). If either exists, report it and stop — do not open a duplicate.
-3. Confirm `develop` is up to date with `origin/develop`, and that `staging`'s only divergence from `develop` is what step 1 found. If `staging` contains commits `develop` does not, stop and report it: that means something reached `staging` outside the flow, and promoting on top of it would carry it to `main` unreviewed.
+3. Confirm `develop` is up to date with `origin/develop`, then check whether anything reached `staging` outside the flow. **Do not test this as "`staging` has commits `develop` does not"** — that is true after every promotion and would stop the command every time. Merging a `develop -> staging` pull request creates a merge commit on `staging` that `develop` will never have; `main` carries the same kind of commit from each `staging -> main` merge. Test instead for a **non-merge** commit unique to the target: `git rev-list --no-merges staging ^develop` and `git rev-list --no-merges main ^staging`. Anything those print is real drift — stop and report it, because promoting on top of it would carry it forward unreviewed. Empty output is the normal state, however many merge commits `git rev-list --count` reports.
 4. Report **one** checklist covering the whole window:
    - the commits in each range, grouped by hop;
    - whether `staging` and `main` are protected (per `/git-check`);
