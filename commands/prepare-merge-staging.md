@@ -10,3 +10,5 @@ Prepare the promotion of `develop` into `staging`. This touches a human-gated br
 4. **Stop here and explicitly ask**: "Open a PR to promote develop into staging? (yes/no)". Do not proceed past this point without an explicit yes in this same conversation.
 5. Only after explicit confirmation: `gh pr create --base staging --head develop --fill`.
 6. Report the PR URL and state clearly that merging is a manual, human action from here — this command does not run `gh pr merge` for `staging`, regardless of confirmation.
+
+To promote both hops on a single confirmation instead of stopping here, use `/promote-window`. It asks once for the whole chain and merges within that authorization; this command deliberately does not.
