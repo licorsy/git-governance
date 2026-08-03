@@ -3,9 +3,9 @@ title: "git-governance"
 doc_type: instruction
 description: "Git branch, commit, and merge policy for this repository and for every repository this plugin is scaffolded into: the branch flow and prefix taxonomy, Conventional Commits, the autonomous-to-develop and human-gated-to-staging/main permission model, per-branch merge methods and branch lifecycle, the local and remote validation layers, and how companion plugins compose with it."
 status: active
-version: "2.2.0"
+version: "2.3.0"
 created: 2026-07-30
-updated: 2026-08-02
+updated: 2026-08-03
 language: en
 id: agents-instructions
 owner: Alexandre Clemente
@@ -74,9 +74,13 @@ feat/* (also fix/, refactor/, docs/, chore/, hotfix/)  ->  develop  ->  staging 
   what makes `develop` safe to automate is that errors there are cheap to
   revert, not a lighter review requirement.
 - Merging into `staging` or `main` always requires **explicit human confirmation
-  before the PR is even opened**, and the merge itself is a human action, not
-  an automated one — even when the request comes from the repo owner using
-  their own credentials. See the permission model in
+  before the PR is even opened** — even when the request comes from the repo
+  owner using their own credentials. That confirmation may be scoped to one
+  merge (`/prepare-merge-staging` and `/prepare-release-main`, which open a PR
+  and never merge) or to a whole `develop -> staging -> main` window
+  (`/promote-window`, which merges within the authorization, each hop only on
+  green required checks). Either way it is asked before anything is opened and
+  covers only the range it was shown. See the permission model in
   `agents/git-governance-advisor.md`.
 
 ### Merge methods
