@@ -10,3 +10,4 @@ Prepare the promotion of `staging` into `main`. This touches the most sensitive 
 4. **Stop here and explicitly ask**: "Open a PR to release staging into main? (yes/no)". Do not proceed past this point without an explicit yes in this same conversation.
 5. Only after explicit confirmation: `gh pr create --base main --head staging --fill`.
 6. Report the PR URL and state clearly that merging is a manual, human action from here — this command does not run `gh pr merge` for `main`, regardless of confirmation. Optionally note that Conventional Commits history makes this a good point to draft release notes, but don't generate them unless asked.
+7. If the repo is tag-consumed, say so and state that the tag has **not** been cut: `main` moving without its tag is what `release-integrity` reports the next morning. This command stops at the PR, so cutting it is the human's next step — `/promote-window` is the path that does it in the same execution.
