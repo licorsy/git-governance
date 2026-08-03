@@ -4,7 +4,7 @@
 
 Portable branch/merge/commit governance for a solo maintainer working with
 Claude Code: a subagent that guides and executes Git operations within a
-fixed taxonomy and permission matrix, five slash commands that mechanize the
+fixed taxonomy and permission matrix, six slash commands that mechanize the
 daily workflow, a local `pre-commit` config as the primary validation layer,
 a minimal GitHub Actions workflow for the parts worth a remote check, and a
 script that configures the part with real teeth — actual branch protection
@@ -111,12 +111,19 @@ their own promotion branches.
 3. `/prepare-merge-develop` — validates the branch, opens a PR into
    `develop`, and merges it automatically once checks pass. No pause needed
    here; errors on `develop` are cheap to revert.
-4. Periodically, when you have something worth promoting:
-   `/prepare-merge-staging` — runs the checklist, then **stops and asks** before
-   opening a `develop -> staging` PR. Merging is a manual click from there.
-5. When `staging` is validated: `/prepare-release-main` — same pattern for
-   `staging -> main`.
-6. `/git-check` anytime — audits branch name, governance files, pre-commit
+4. Periodically, when you have something worth promoting, in one of two shapes:
+   - `/prepare-merge-staging` — runs the checklist, then **stops and asks** before
+     opening a `develop -> staging` PR. Merging is a manual click from there.
+     Then `/prepare-release-main` once `staging` is validated — same pattern for
+     `staging -> main`. Two confirmations, with a pause between the hops.
+   - `/promote-window` — asks **once** for the whole `develop -> staging -> main`
+     chain, then runs both hops within that authorization, each merging only on
+     green checks and stopping at the first red. Cuts the release tag in the same
+     execution if the repo is tag-consumed. One confirmation, no pause.
+
+   How often a window is opened is the consuming organization's call, not this
+   plugin's.
+5. `/git-check` anytime — audits branch name, governance files, pre-commit
    installation, and branch protection status; offers to fix gaps, never
    writes without asking first.
 
@@ -129,6 +136,7 @@ their own promotion branches.
 | `/prepare-merge-develop` | Validates and auto-merges a work branch into `develop`. |
 | `/prepare-merge-staging` | Opens a `develop -> staging` PR after explicit confirmation; never auto-merges. |
 | `/prepare-release-main` | Opens a `staging -> main` PR after explicit confirmation; never auto-merges. |
+| `/promote-window` | Asks once for `develop -> staging -> main`, then runs both hops and cuts the tag within that one authorization. |
 
 ## When to use GitHub Actions
 
@@ -196,7 +204,7 @@ or private.
 
 - `agents/git-governance-advisor.md` — the persona: branch taxonomy,
   permission matrix, commit format, lifecycle, and validation output format.
-- `commands/` — the 5 slash commands listed above.
+- `commands/` — the 6 slash commands listed above.
 - `scripts/setup-branch-protection.sh` — configures real enforcement on
   GitHub.
 - `scripts/init-governance.sh` — scaffolds this plugin's governance files
