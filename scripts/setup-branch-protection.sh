@@ -41,6 +41,25 @@
 # approving your own pull request, so a non-zero count locks a solo maintainer
 # out of their own promotion branches. Do not "harden" it that way.
 #
+# Required status checks: this script PRESERVES them, and never sets them.
+# A ruleset is replaced wholesale by PUT rather than merged, so a rule this
+# script does not write is dropped on re-run — which is how an earlier version
+# silently deleted required checks applied out of band, on every branch, with
+# no warning. Each `protect-<branch>` ruleset is now read before it is written
+# and its `required_status_checks` rule carried forward verbatim.
+#
+# It preserves rather than owns because the contexts are per-repository and
+# cannot be derived: the docs check reports as `docs-governance` in one repo
+# and `ci-docs / docgov` in another, a matrix job contributes one context per
+# cell, and a reusable-workflow call reports as `caller-job / called-job`. A
+# context that is required but never reported blocks the branch permanently on
+# "Expected — waiting for status to be reported", so guessing one is worse than
+# setting none. Apply them out of band; re-running this is then safe.
+#
+# Consequently it also does not REMOVE a required check. Dropping one means
+# editing the ruleset directly — this script will faithfully preserve whatever
+# it finds, including a stale context.
+#
 # Legacy rulesets: repositories protected before this script existed may carry
 # a single ruleset named `branch-protection` spanning all three refs. It is
 # removed when found, after the per-branch rulesets are in place — leaving both
@@ -85,6 +104,7 @@ EXISTING_BRANCHES="$(gh api "repos/${REPO}/branches" --jq '.[].name')"
 
 CONFIGURED=()
 SKIPPED=()
+PRESERVED=()
 
 for BRANCH in "${BRANCHES[@]}"; do
   if ! grep -qx "$BRANCH" <<<"$EXISTING_BRANCHES"; then
@@ -95,6 +115,26 @@ for BRANCH in "${BRANCHES[@]}"; do
 
   RULESET_NAME="protect-${BRANCH}"
   EXISTING_ID="$(gh api "repos/${REPO}/rulesets" --jq ".[] | select(.name==\"${RULESET_NAME}\") | .id" 2>/dev/null || true)"
+
+  # A ruleset is replaced wholesale by PUT, never merged, so any rule this
+  # script does not write is dropped on re-run. `required_status_checks` is
+  # applied out of band — its contexts differ per repository (`docs-governance`
+  # here, `ci-docs / docgov` in a repo whose docs check runs under a different
+  # caller job; a matrix adds one context per cell) — so this script cannot own
+  # it without inventing context names, and a context that is required but
+  # never reported blocks the branch permanently. Carry the existing rule
+  # forward verbatim instead. Empty when there is no ruleset yet or it has no
+  # such rule: this preserves, it never invents.
+  PRESERVED_CHECKS=""
+  if [ -n "$EXISTING_ID" ]; then
+    PRESERVED_CHECKS="$(gh api "repos/${REPO}/rulesets/${EXISTING_ID}" \
+      --jq '[.rules[] | select(.type=="required_status_checks")] | .[0] // empty' 2>/dev/null || true)"
+  fi
+  PRESERVED_RULE_ENTRY=""
+  if [ -n "$PRESERVED_CHECKS" ]; then
+    PRESERVED_RULE_ENTRY=",
+    ${PRESERVED_CHECKS}"
+  fi
 
   # develop is the integration branch: squash is a useful way to collapse a
   # noisy work branch. staging and main only ever receive promotions, and a
@@ -127,13 +167,20 @@ for BRANCH in "${BRANCHES[@]}"; do
         "required_review_thread_resolution": false,
         "allowed_merge_methods": ${MERGE_METHODS}
       }
-    }
+    }${PRESERVED_RULE_ENTRY}
   ]
 }
 JSON
 )
 
   if [ -n "$EXISTING_ID" ]; then
+    if [ -n "$PRESERVED_CHECKS" ]; then
+      echo "Preserving required status checks already on '${RULESET_NAME}': $(
+        gh api "repos/${REPO}/rulesets/${EXISTING_ID}" \
+          --jq '[.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context] | join(", ")'
+      )"
+      PRESERVED+=("$BRANCH")
+    fi
     echo "Updating existing ruleset '${RULESET_NAME}' (id ${EXISTING_ID}) on ${REPO}..."
     gh api --method PUT "repos/${REPO}/rulesets/${EXISTING_ID}" --input - <<<"$PAYLOAD" >/dev/null
   else
@@ -158,4 +205,4 @@ if [ "${#CONFIGURED[@]}" -gt 0 ]; then
 fi
 
 echo ""
-echo "Configured: ${CONFIGURED[*]:-none}. Skipped (branch not found): ${SKIPPED[*]:-none}. Legacy ruleset removed: ${LEGACY_REMOVED}."
+echo "Configured: ${CONFIGURED[*]:-none}. Skipped (branch not found): ${SKIPPED[*]:-none}. Required status checks preserved on: ${PRESERVED[*]:-none}. Legacy ruleset removed: ${LEGACY_REMOVED}."
