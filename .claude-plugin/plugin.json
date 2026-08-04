@@ -1,6 +1,6 @@
 {
   "name": "git-governance",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Branch-naming taxonomy, commit-message and merge-permission matrix (autonomous up to develop, human-gated for staging/main, per merge or per promotion window), 6 slash commands for the daily solo workflow, a pre-commit config as the primary local validation layer, a quota-conscious GitHub Actions workflow, and a script that configures real GitHub branch protection including per-branch merge methods and automatic work-branch cleanup. AGENTS.md is the source of truth for the policy; CLAUDE.md is a thin @AGENTS.md import, and both are scaffolded.\"",
   "author": {
     "name": "Licorsy",
