@@ -71,7 +71,8 @@ module.exports = {
     // These three facts pin the exact defects that already drifted more than
     // once in this repo's own history (see "Documentation ownership" in
     // AGENTS.md) — the 6-prefix branch taxonomy, the docs-governance CI
-    // step's 3-clause guard condition, and the per-branch merge methods.
+    // job's 3-clause, step-level guard condition, and the per-branch merge
+    // methods.
     facts: {
       // Out of shadow mode: precision is proven. These entries have caught the
       // same class of drift repeatedly with no false positive, and a pin that
