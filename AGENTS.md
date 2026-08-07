@@ -73,14 +73,15 @@ feat/* (also fix/, refactor/, docs/, chore/, hotfix/)  ->  develop  ->  staging 
   it once `pre-commit` and commit-message checks pass. No pause is needed —
   what makes `develop` safe to automate is that errors there are cheap to
   revert, not a lighter review requirement.
-- Merging into `staging` or `main` always requires **explicit human confirmation
-  before the PR is even opened** — even when the request comes from the repo
-  owner using their own credentials. That confirmation may be scoped to one
-  merge (`/prepare-merge-staging` and `/prepare-release-main`, which open a PR
-  and never merge) or to a whole `develop -> staging -> main` window
-  (`/promote-window`, which merges within the authorization, each hop only on
-  green required checks). Either way it is asked before anything is opened and
-  covers only the range it was shown. See the permission model in
+- Opening a promotion PR into `staging` or `main` needs no confirmation.
+  **Merging one always requires explicit human confirmation**, given after the
+  PR exists — even when the request comes from the repo owner using their own
+  credentials, and even in the same breath as the request to open it.
+  `/prepare-merge-staging` and `/prepare-release-main` open a PR per hop and
+  never merge either one, confirmation or not. `/promote-window` is the one
+  exception, asked for **by name**: it covers a whole
+  `develop -> staging -> main` window and merges within that authorization,
+  each hop only on green required checks. See the permission model in
   `agents/git-governance-advisor.md`.
 
 ### Merge methods
