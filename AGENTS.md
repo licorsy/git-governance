@@ -3,9 +3,9 @@ title: "git-governance"
 doc_type: instruction
 description: "Git branch, commit, and merge policy for this repository and for every repository this plugin is scaffolded into: the branch flow and prefix taxonomy, Conventional Commits, the autonomous-to-develop and human-gated-to-staging/main permission model, per-branch merge methods and branch lifecycle, the local and remote validation layers, and how companion plugins compose with it."
 status: active
-version: "2.3.0"
+version: "2.4.0"
 created: 2026-07-30
-updated: 2026-08-03
+updated: 2026-08-07
 language: en
 id: agents-instructions
 owner: Alexandre Clemente
@@ -73,14 +73,15 @@ feat/* (also fix/, refactor/, docs/, chore/, hotfix/)  ->  develop  ->  staging 
   it once `pre-commit` and commit-message checks pass. No pause is needed —
   what makes `develop` safe to automate is that errors there are cheap to
   revert, not a lighter review requirement.
-- Merging into `staging` or `main` always requires **explicit human confirmation
-  before the PR is even opened** — even when the request comes from the repo
-  owner using their own credentials. That confirmation may be scoped to one
-  merge (`/prepare-merge-staging` and `/prepare-release-main`, which open a PR
-  and never merge) or to a whole `develop -> staging -> main` window
-  (`/promote-window`, which merges within the authorization, each hop only on
-  green required checks). Either way it is asked before anything is opened and
-  covers only the range it was shown. See the permission model in
+- Opening a promotion PR into `staging` or `main` needs no confirmation.
+  **Merging one always requires explicit human confirmation**, given after the
+  PR exists — even when the request comes from the repo owner using their own
+  credentials, and even in the same breath as the request to open it.
+  `/prepare-merge-staging` and `/prepare-release-main` open a PR per hop and
+  never merge either one, confirmation or not. `/promote-window` is the one
+  exception, asked for **by name**: it covers a whole
+  `develop -> staging -> main` window and merges within that authorization,
+  each hop only on green required checks. See the permission model in
   `agents/git-governance-advisor.md`.
 
 ### Merge methods
@@ -225,8 +226,9 @@ the first.
 Each fact this plugin governs — the branch-prefix taxonomy, the permission
 matrix, a command's step-by-step behavior, a script's contract, an
 enforcement claim like the CI guard's clause count — has exactly **one**
-authoritative file. Every other file links to it (`"see X"`) instead of
-restating it in its own prose:
+authoritative file. Every other file either links to it (`"see X"`) or
+restates it only where a pinned `facts` or `fragment_sync` entry keeps the
+copies identical:
 
 - Taxonomy and the permission matrix → owned by
   `agents/git-governance-advisor.md` only.
@@ -235,20 +237,20 @@ restating it in its own prose:
 
 This repo uses `docs-governance` (see "Companion plugins" above) to catch
 restatement drift mechanically where it can: `.docgov.config.js` declares
-`facts` entries for the taxonomy list and the CI guard's clause count, and a
-`fragment_sync` entry for the branch-flow diagram duplicated verbatim across
-`CLAUDE.md` and `README.md`. If an audit — human, `docgov`, or an LLM
-auditor — finds the same fact stated in 2+ files, the fix is to add or
-extend one of those config entries, not just correct the wording in place:
-correcting the wording alone leaves nothing keeping the next edit from
-re-breaking it.
+three `facts` entries — the taxonomy list, the CI guard's clause count, and
+the per-branch merge-method policy — plus a `fragment_sync` entry for the
+branch-flow diagram duplicated verbatim from this file into `README.md`. If
+an audit — human, `docgov`, or an LLM auditor — finds the same fact stated
+in 2+ files, the fix is to add or extend one of those config entries, not
+just correct the wording in place: correcting the wording alone leaves
+nothing keeping the next edit from re-breaking it.
 
 ## Replicating this setup into another repository
 
 1. `claude plugin marketplace add licorsy/git-governance` then
    `claude plugin install git-governance@git-governance` in the target repo.
 2. Run `/git-check` — it reports what's missing and, with confirmation,
-   scaffolds this file plus `.pre-commit-config.yaml`,
+   scaffolds this file plus `CLAUDE.md`, `.pre-commit-config.yaml`,
    `.github/workflows/pr-checks.yml`, and `.claude/settings.json` via
    `scripts/init-governance.sh`. It never overwrites a file that already
    exists in the target repo — which matters most for `.claude/settings.json`,
