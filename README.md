@@ -22,7 +22,7 @@ claude plugin marketplace add licorsy/git-governance
 claude plugin install git-governance@git-governance
 ```
 
-This makes the `git-governance-advisor` subagent and the 5 commands below
+This makes the `git-governance-advisor` subagent and the 6 commands below
 available in any Claude Code session opened in that repository.
 
 ## Branch and commit flow
@@ -98,7 +98,8 @@ a promotion merges.
 What the script does **not** and cannot do: distinguish "the owner clicked
 merge" from "an AI agent using the owner's own credentials clicked merge."
 That distinction is the subagent's job (`agents/git-governance-advisor.md`):
-it asks before touching `staging`/`main`; up to `develop`, it acts on its own.
+it asks before *merging* into `staging`/`main`; opening the PR, and everything
+up to `develop`, it does on its own.
 Requiring an approving review is not a substitute — GitHub forbids approving
 your own pull request, so any non-zero count locks a solo maintainer out of
 their own promotion branches.
@@ -112,14 +113,17 @@ their own promotion branches.
    `develop`, and merges it automatically once checks pass. No pause needed
    here; errors on `develop` are cheap to revert.
 4. Periodically, when you have something worth promoting, in one of two shapes:
-   - `/prepare-merge-staging` — runs the checklist, then **stops and asks** before
-     opening a `develop -> staging` PR. Merging is a manual click from there.
-     Then `/prepare-release-main` once `staging` is validated — same pattern for
-     `staging -> main`. Two confirmations, with a pause between the hops.
-   - `/promote-window` — asks **once** for the whole `develop -> staging -> main`
-     chain, then runs both hops within that authorization, each merging only on
-     green checks and stopping at the first red. Cuts the release tag in the same
-     execution if the repo is tag-consumed. One confirmation, no pause.
+   - `/prepare-merge-staging` — runs the checklist and opens the
+     `develop -> staging` PR without asking first; merging it is always a
+     separate, manual human action. Then `/prepare-release-main` once
+     `staging` is validated — same pattern for `staging -> main`. Opening
+     never needs a confirmation; merging always does, once per hop.
+   - `/promote-window` — asks **once**, by name, to authorize the whole
+     `develop -> staging -> main` chain, then opens and merges both hops
+     within that one authorization, each only on green checks and stopping
+     at the first red. Cuts the release tag in the same execution if the
+     repo is tag-consumed. One confirmation covers both merges, not just
+     both opens.
 
    How often a window is opened is the consuming organization's call, not this
    plugin's.
@@ -134,8 +138,8 @@ their own promotion branches.
 | `/git-check` | Audits the repo's governance setup and offers to scaffold missing pieces. |
 | `/create-feature <description> [id] [prefix]` | Creates a correctly named branch from `develop`. |
 | `/prepare-merge-develop` | Validates and auto-merges a work branch into `develop`. |
-| `/prepare-merge-staging` | Opens a `develop -> staging` PR after explicit confirmation; never auto-merges. |
-| `/prepare-release-main` | Opens a `staging -> main` PR after explicit confirmation; never auto-merges. |
+| `/prepare-merge-staging` | Opens a `develop -> staging` PR without asking first; merging always needs a separate human confirmation. |
+| `/prepare-release-main` | Opens a `staging -> main` PR without asking first; merging always needs a separate human confirmation. |
 | `/promote-window` | Asks once for `develop -> staging -> main`, then runs both hops and cuts the tag within that one authorization. |
 
 ## When to use GitHub Actions
@@ -153,13 +157,13 @@ confirmation is worth the minutes.
 `git-governance` owns branch taxonomy, commit format, and merge permissions
 for a repo — not every workflow trigger. A companion plugin — e.g.
 [docs-governance](https://github.com/licorsy/docs-governance) for Markdown
-consistency — can plug into `pr-checks.yml` as a step (already wired in,
+consistency — can plug into `pr-checks.yml` as a job (already wired in,
 auto-skipped outside `pull_request` runs, and also skipped unless the repo
 has a `.docgov.config.js` *and* no `.github/workflows/docs-governance.yml` of
 its own — that exact filename is what the guard checks for), which is the
 simplest option when no per-repo
 customization is needed. It may instead bring its own workflow at exactly
-that path when it needs something the shared step can't give it (for example,
+that path when it needs something the shared job can't give it (for example,
 extra path filters), as long as that file is narrowly path-filtered to what
 it actually checks **and** matches this repo's branch scope —
 `pull_request: branches: [staging, main]` plus `workflow_dispatch: {}`, no
@@ -217,9 +221,24 @@ or private.
   here and copied into target repos as the local/remote validation layers.
 - `.docgov.config.js` — this repo's own docs-governance config (not
   scaffolded into target repos); it's what `pr-checks.yml`'s shared
-  `docs-governance` step guard checks for.
+  `docs-governance` job checks for, via its step-level guard condition.
+- `.claude/settings.json` — enables this repo's own plugins for its Claude
+  Code sessions; scaffolded into target repos, but only as a file
+  `init-governance.sh` won't overwrite if one already exists there.
+- `.markdownlint.yaml` — present for editor/manual `markdownlint` use; not
+  wired into `.pre-commit-config.yaml` or any workflow yet.
+- `.claude-plugin/plugin.json` — this plugin's manifest and **version file**:
+  `commands/promote-window.md` and `.github/workflows/release-integrity.yml`
+  both read `version` from it directly.
+- `.claude-plugin/marketplace.json` — the self-hosted marketplace entry
+  `claude plugin marketplace add licorsy/git-governance` resolves against.
+- `LICENSE` — MIT.
 - `.github/workflows/scorecard.yml` — OpenSSF Scorecard analysis for this
   repo only (not scaffolded into target repos); runs on `push` to `main`, a
-  weekly schedule, and `branch_protection_rule` changes — the one deliberate
-  exception to this repo's push-off, quota-conscious Actions convention,
-  since Scorecard needs those triggers to produce a fresh score.
+  weekly schedule, and `branch_protection_rule` changes — the one
+  push-triggered exception to this repo's push-off, quota-conscious Actions
+  convention, since Scorecard needs those triggers to produce a fresh score.
+- `.github/workflows/release-integrity.yml` — a second, differently-shaped
+  exception (not scaffolded into target repos): runs on a daily `schedule`
+  plus `workflow_dispatch`, catching floating-tag drift without waiting for
+  a promotion PR to surface it.
