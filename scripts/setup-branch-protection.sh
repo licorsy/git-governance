@@ -60,6 +60,14 @@
 # editing the ruleset directly — this script will faithfully preserve whatever
 # it finds, including a stale context.
 #
+# Plan gate: GitHub serves rulesets on a private (or internal) repository only
+# when its owner is on a paid plan — GitHub Pro for a user account, Team or
+# Enterprise for an organization. On a Free organization every rulesets call
+# answers HTTP 403 "Upgrade to GitHub Pro or make this repository public". The
+# script probes that endpoint before writing anything, so a repo it cannot
+# protect fails with the reason and is left exactly as it was, instead of
+# having its merge settings changed and then aborting halfway.
+#
 # Legacy rulesets: repositories protected before this script existed may carry
 # a single ruleset named `branch-protection` spanning all three refs. It is
 # removed when found, after the per-branch rulesets are in place — leaving both
@@ -92,6 +100,19 @@ gh auth status >/dev/null 2>&1 || {
   echo "gh CLI is not authenticated. Run 'gh auth login' first." >&2
   exit 1
 }
+
+# Probe before the first write — see "Plan gate" in the header.
+if ! RULESETS_PROBE="$(gh api "repos/${REPO}/rulesets" 2>&1 >/dev/null)"; then
+  if grep -q "Upgrade to GitHub Pro" <<<"$RULESETS_PROBE"; then
+    VISIBILITY="$(gh api "repos/${REPO}" --jq '.visibility' 2>/dev/null || echo unknown)"
+    echo "Cannot protect ${REPO}: it is ${VISIBILITY}, and its owner's GitHub plan does not include rulesets on non-public repositories (HTTP 403)." >&2
+    echo "Options: make the repository public, move it to a user account on GitHub Pro, or upgrade the organization to Team. Nothing was changed." >&2
+  else
+    echo "Cannot read rulesets on ${REPO}; nothing was changed. GitHub said:" >&2
+    echo "$RULESETS_PROBE" >&2
+  fi
+  exit 1
+fi
 
 echo "Applying repository-level merge settings on ${REPO}..."
 gh api --method PATCH "repos/${REPO}" \

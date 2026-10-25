@@ -71,7 +71,10 @@ Elsewhere, the equivalent is
 by Claude Code inside a session (that variable doesn't resolve in a bare
 terminal). With no branch arguments, it tries `develop staging main` and
 silently skips any that don't exist yet. Requires the `gh` CLI, authenticated,
-with admin permission on the target repo.
+with admin permission on the target repo. A private repository also needs a
+paid owner plan (GitHub Pro for a user, Team for an organization): on a Free
+organization GitHub answers rulesets calls with HTTP 403, and the script stops
+before changing anything and says so.
 
 What the script wires up:
 
