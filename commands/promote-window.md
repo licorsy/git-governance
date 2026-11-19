@@ -1,5 +1,5 @@
 ---
-description: Promote develop -> staging -> main in one authorized window — asks once for the whole chain, then runs both hops, each only on green checks, and cuts the release tag if the repo is tag-consumed.
+description: Promote develop -> staging -> main in one authorized window — asks once for the whole chain, then runs both hops, each only on green checks, and cuts the release tag and GitHub Release if the repo is tag-consumed.
 ---
 
 Run a **promotion window**: both hops of `develop -> staging -> main`, authorized by a single explicit confirmation instead of one per hop.
@@ -20,15 +20,16 @@ Use `/prepare-merge-staging` and `/prepare-release-main` instead when you want t
    - whether `staging` and `main` are protected (per `/git-check`);
    - local `pre-commit` status — note that Actions doesn't run on `develop`, so this is a local signal, not a remote one;
    - anything step 3 printed, named and dated, so the human can say whether it is a known artifact or something new;
-   - if the repo is tag-consumed (a version file plus a floating major tag — see step 8), the current version and the version this window would publish. **If the version file was not bumped in the range being promoted, say so here**, before asking: promoting to `main` without it is what `release-integrity` reports the next morning.
+   - if the repo is tag-consumed (consumers pin a floating major tag `v<major>`, with or without a version file — see step 8), the current version and the version this window would publish. With a version file, **if it was not bumped in the range being promoted, say so here**, before asking: promoting to `main` without it is what `release-integrity` reports the next morning. Without one, propose the next version from the newest `vX.Y.Z` tag — patch by default, minor if the range adds a workflow, input or command — so the confirmation in step 5 covers the number too.
 5. **Stop here and ask once**: "Promote this window — develop -> staging -> main? (yes/no)". Do not proceed past this point without an explicit yes in this same conversation. If the answer names only one hop, honor exactly that and stop after it.
 6. First hop: `gh pr create --base staging --head develop --fill`, then wait for its checks (`gh pr checks --watch`). **Merge only if every required check is green**: `gh pr merge --merge`. On any failure, stop and report — do not open the second hop.
 7. Second hop, only if the first merged cleanly: `gh pr create --base main --head staging --fill`, wait for checks the same way, then `gh pr merge --merge`. Same rule: first red stops the window.
 8. If the repo is tag-consumed, cut the release in the same execution, not as a follow-up:
-   - read the version from the repo's version file (`.claude-plugin/plugin.json`'s `.version` for a Claude Code plugin);
+   - take the version from the repo's version file (`.claude-plugin/plugin.json`'s `.version` for a Claude Code plugin), or, for a repo with no version file, the number confirmed in step 5;
    - `git fetch --tags`, then tag `main` as `v<version>` and push it;
    - move the floating major tag (`v<major>`) to the same commit and force-push it — consumers pin the floating tag, so leaving it behind is what makes `main` and the tag disagree.
-   - Verify with `git ls-remote --tags origin` before reporting done.
+   - publish the GitHub Release for the new tag (`gh release create v<version> --verify-tag --generate-notes`), so the Releases page never lags behind the tags;
+   - Verify with `git ls-remote --tags origin` and `gh release view v<version>` before reporting done.
 9. Report, using the agent's output format: what was promoted, both PR URLs, the tag if one was cut, and whether anything remains unpromoted.
 
 **Never** widen the window beyond what was confirmed: no extra repository, no commits that landed on `develop` after the checklist was shown. If new commits arrived mid-window, finish the confirmed range and report the remainder rather than sweeping it in.
