@@ -117,8 +117,8 @@ their own promotion branches.
    here; errors on `develop` are cheap to revert.
 4. Periodically, when you have something worth promoting, in one of two shapes:
    - `/prepare-merge-staging` — runs the checklist and opens the
-     `develop -> staging` PR without asking first; merging it is always a
-     separate, manual human action. Then `/prepare-release-main` once
+     `develop -> staging` PR without asking first; merging it always needs
+     your explicit confirmation once the PR exists. Then `/prepare-release-main` once
      `staging` is validated — same pattern for `staging -> main`. Opening
      never needs a confirmation; merging always does, once per hop.
    - `/promote-window` — asks **once**, by name, to authorize the whole
