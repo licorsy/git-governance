@@ -77,8 +77,9 @@ module.exports = {
       // Out of shadow mode: precision is proven. These entries have caught the
       // same class of drift repeatedly with no false positive, and a pin that
       // only reports is decoration — the drift it was added for happens anyway.
-      // This also makes the rule run under `--changed`, so pre-commit catches
-      // it rather than CI at promotion time.
+      // This also makes the rule run under `--changed`, so a pre-commit docgov
+      // hook would catch it; that hook is commented out in this repository's
+      // .pre-commit-config.yaml, so here CI (ci-docs) is what catches it.
       shadow: false,
       scope_dirs: ['agents', 'commands'],
       entries: [

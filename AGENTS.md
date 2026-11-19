@@ -3,9 +3,9 @@ title: "git-governance"
 doc_type: instruction
 description: "Git branch, commit, and merge policy for this repository and for every repository this plugin is scaffolded into: the branch flow and prefix taxonomy, Conventional Commits, the autonomous-to-develop and human-gated-to-staging/main permission model, per-branch merge methods and branch lifecycle, the local and remote validation layers, and how companion plugins compose with it."
 status: active
-version: "2.4.0"
+version: "2.5.0"
 created: 2026-07-30
-updated: 2026-08-07
+updated: 2026-11-19
 language: en
 id: agents-instructions
 owner: Alexandre Clemente
@@ -25,6 +25,9 @@ literal file scaffolded into any repository this plugin is installed into
 (`scripts/init-governance.sh` copies it as-is, together with the thin
 `CLAUDE.md` — see "Replicating this setup" below). Do not add project-specific
 detail here that wouldn't make sense verbatim in another repo.
+In a scaffolded copy, every unqualified "this plugin" and every bare
+`agents/`- or `scripts/`-prefixed path refers to `git-governance` and lives in
+that plugin's repository, not in the host repository.
 
 The frontmatter block above is the one exception, because it describes *this*
 repository. A scaffolded copy should reset `created`, `updated`, and `owner` to
